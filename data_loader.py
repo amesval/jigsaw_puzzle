@@ -1,125 +1,90 @@
-# =============================================================================
-# from __future__ import print_function, division
-# import os
-# import torch
-# import pandas as pd
-# from skimage import io, transform
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from torch.utils.data import Dataset, DataLoader
-# from torchvision import transforms, utils
-# 
-# # Ignore warnings
-# import warnings
-# warnings.filterwarnings("ignore")
-# 
-# plt.ion()   # interactive mode
-# =============================================================================
-
-
 import torch
 from torch.utils.data import Dataset, DataLoader
 import os
 import numpy as np
-#from PIL import Image
-#from multiprocessing import cpu_count
 import glob
 import pickle
 
 
-# class PuzzleDataset(Dataset):
-    
-#     def __init__(self, path_dataset):
-        
-#         self.path_dataset = path_dataset
-#         self.files = glob.glob(self.path_dataset+'*')
-#         self.len = len(self.files)
-#         self.index_to_file = {}
-#         for index, path in enumerate(self.files):
-#             self.index_to_file[index] = path
-    
-#     def __len__(self):
-#         return self.len
-    
-#     def __getitem__(self, index):
-        
-#         image_path = os.path.join(self.index_to_file[index], 'image', 'image.jpg')
-#         puzzle_path = os.path.join(self.index_to_file[index], 'puzzle', 'puzzle.jpg')
-        
-#         image = np.asarray(Image.open(image_path))
-#         puzzle = np.asarray(Image.open(puzzle_path))
-        
-#         return torch.from_numpy(puzzle), torch.from_numpy(image)
-    
-    
-# class PuzzleDataset2(Dataset):
-    
-#     def __init__(self, path_dataset):
-        
-#         self.path_dataset = path_dataset
-#         self.files = glob.glob(self.path_dataset+'*')
-#         self.len = len(self.files)
-#         self.index_to_file = {}
-#         for index, path in enumerate(self.files):
-#             self.index_to_file[index] = path
-    
-#     def __len__(self):
-#         return self.len
-    
-#     def __getitem__(self, index):
-        
-#         image_path = os.path.join(self.index_to_file[index], 'image', 'image.jpg')
-#         sub_images_path = os.path.join(self.index_to_file[index], 'sub_images', 'random_sub_images.pkl')
-        
-#         image = np.asarray(Image.open(image_path))
-#         with open(sub_images_path, 'rb') as f:
-#             sub_images = pickle.load(f)
-        
-#         return torch.from_numpy(sub_images), torch.from_numpy(image)
-    
-    
-class PuzzleDataset3(Dataset):
-    
+class PuzzleDataset(Dataset):
+
     def __init__(self, path_dataset):
-        
         self.path_dataset = path_dataset
-        self.files = glob.glob(self.path_dataset+'*')
+        self.files = glob.glob(self.path_dataset + '*')
         self.len = len(self.files)
         self.index_to_file = {}
+        self.labels = {}
         for index, path in enumerate(self.files):
             self.index_to_file[index] = path
-            
-        self.num_permutations = len(glob.glob(self.files[0]+'/sub_images/*'))
-        print(self.num_permutations)
-    
+            self.labels[index] = int(os.listdir(os.path.join(path, "sub_images"))[0])
+
     def __len__(self):
         return self.len
-    
+
     def __getitem__(self, index):
-        
-        label = np.random.randint(self.num_permutations)
-        
+        label = self.labels[index]
         sub_images_path = os.path.join(self.index_to_file[index],
-                                       'sub_images', 
-                                       str(label), 
+                                       'sub_images',
+                                       str(label),
                                        'random_sub_images.pkl')
-        
+
         with open(sub_images_path, 'rb') as f:
             sub_images = pickle.load(f)
-        print(label)
-        return torch.from_numpy(np.asarray(sub_images)), label#torch.IntTensor(label)
-            
+        #print(self.index_to_file[index], label)
 
-# https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
-# https://www.youtube.com/watch?v=zN49HdDxHi8
-# https://discuss.pytorch.org/t/how-does-enumerate-trainloader-0-work/14410/2
+        a = np.dot(np.asarray(sub_images), [0.2989, 0.5870, 0.1140]) #convert to grayscale
+        a = torch.from_numpy(a)
+
+        a.view(4, 1, 114, 114)
+        #a = a / 255.0
+        # mean = 0.0
+        # std = 1.0
+        # a = a + torch.randn(a.size()) * std + mean
+        #a = a.view(4, 3, 114, 114)
+        #a = a.view(4, 3, 75, 75)
+        return a, label
+
+
+
+
 
 if __name__ == '__main__':
-    
-    puzzle_data = PuzzleDataset3('/Users/amesval/Documents/puzzle_2_by_2/')
-    
-    trainloader = DataLoader(puzzle_data, batch_size=32)
-    
-    batches = iter(trainloader)
-    
-    #does dataloader change when the epoch finish?
+
+    puzzle_data = PuzzleDataset('v2puzzle_2_by_2_train/')
+    train_loader = DataLoader(puzzle_data, batch_size=10, shuffle=True) #siempre genera el dataloader en el mismo orden :o
+    batches = iter(train_loader)
+
+
+    # print(len(batches))
+    # cont = 0
+    # for images, labels in batches:
+    #     if cont == 0:
+    #         print(labels)
+    #     cont += 1
+    #
+    # print(len(batches))
+    # cont = 0
+    # for images, labels in batches:
+    #     if cont == 0:
+    #         print(labels)
+    #         print("james")
+    #     cont += 1
+
+    # no regreso nada esto
+
+
+    # cont = 0
+    # for images, labels in train_loader:
+    #     if cont == 0:
+    #         print(labels)
+    #     cont += 1
+    # print(cont)
+    # cont = 0
+    # for images, labels in train_loader:
+    #     if cont == 0:
+    #         print(labels)
+    #         print("james")
+    #     cont += 1
+
+    #parece que cuando se termina un train_loader, automaticamente genera otro al azar
+    # Si shuffle es == False, entonces siempre seran identicos
