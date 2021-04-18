@@ -51,32 +51,17 @@ class PuzzleDataset(Dataset):
 if __name__ == '__main__':
 
     puzzle_data = PuzzleDataset('v2puzzle_2_by_2_train/')
-    train_loader = DataLoader(puzzle_data, batch_size=10, shuffle=True) #siempre genera el dataloader en el mismo orden :o
+    train_loader = DataLoader(puzzle_data, batch_size=10, shuffle=False) #siempre genera el dataloader en el mismo orden :o
     batches = iter(train_loader)
 
-
+    # print(len(puzzle_data))
     # print(len(batches))
-    # cont = 0
-    # for images, labels in batches:
-    #     if cont == 0:
-    #         print(labels)
-    #     cont += 1
-    #
-    # print(len(batches))
-    # cont = 0
-    # for images, labels in batches:
-    #     if cont == 0:
-    #         print(labels)
-    #         print("james")
-    #     cont += 1
-
-    # no regreso nada esto
-
 
     # cont = 0
     # for images, labels in train_loader:
     #     if cont == 0:
     #         print(labels)
+    #         break
     #     cont += 1
     # print(cont)
     # cont = 0
@@ -84,7 +69,8 @@ if __name__ == '__main__':
     #     if cont == 0:
     #         print(labels)
     #         print("james")
+    #         break
     #     cont += 1
-
-    #parece que cuando se termina un train_loader, automaticamente genera otro al azar
-    # Si shuffle es == False, entonces siempre seran identicos
+    # print(cont)
+    #el trainloader consiste de muchos batches... parece que se genera cuando se invoca?..
+    #parece que cuando se termina un train_loader, automaticamente genera otro al azar si shuffle=True (sino, seran identicos)
