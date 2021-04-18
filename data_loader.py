@@ -4,36 +4,39 @@ import os
 import numpy as np
 import glob
 import pickle
-
+from preprocessing import get_sub_images_permutation
 
 class PuzzleDataset(Dataset):
 
     def __init__(self, path_dataset):
         self.path_dataset = path_dataset
-        self.files = glob.glob(self.path_dataset + '*')
-        self.len = len(self.files)
+        self.image_folders = glob.glob(self.path_dataset + '*')
+        self.len = len(self.image_folders)
         self.index_to_file = {}
-        self.labels = {}
-        for index, path in enumerate(self.files):
+        self.labels = select_random_permutation(24, 24)
+
+        for index, path in enumerate(self.image_folders):
             self.index_to_file[index] = path
-            self.labels[index] = int(os.listdir(os.path.join(path, "sub_images"))[0])
 
     def __len__(self):
         return self.len
 
     def __getitem__(self, index):
-        label = self.labels[index]
+
+        label = np.random.choice(self.labels)
+
         sub_images_path = os.path.join(self.index_to_file[index],
-                                       'sub_images',
-                                       str(label),
-                                       'random_sub_images.pkl')
+                                       'sub_images.pkl')
 
         with open(sub_images_path, 'rb') as f:
             sub_images = pickle.load(f)
-        #print(self.index_to_file[index], label)
 
+        print(self.index_to_file[index])
+
+        a = get_sub_images_permutation(sub_images, label)
         a = np.dot(np.asarray(sub_images), [0.2989, 0.5870, 0.1140]) #convert to grayscale
         a = torch.from_numpy(a)
+        #print(a.size())
 
         a.view(4, 1, 114, 114)
         #a = a / 255.0
@@ -45,34 +48,32 @@ class PuzzleDataset(Dataset):
         return a, label
 
 
+def select_random_permutation(total_permutation_number=24, num_random_permutation=24):
+    a = np.arange(total_permutation_number)
+    return np.random.choice(a, num_random_permutation, replace=False)
+
+
+
 
 
 
 if __name__ == '__main__':
 
-    puzzle_data = PuzzleDataset('v2puzzle_2_by_2_train/')
-    train_loader = DataLoader(puzzle_data, batch_size=10, shuffle=False) #siempre genera el dataloader en el mismo orden :o
+    puzzle_data = PuzzleDataset('flickr_sub_images/')
+    train_loader = DataLoader(puzzle_data, batch_size=10, shuffle=True)
     batches = iter(train_loader)
 
-    # print(len(puzzle_data))
-    # print(len(batches))
+    # Aunque shuffle = False, siempre esta generando nuevas etiquetas
+    # porque el getitem tiene un shuffle...
+    # entonces de todas formas aunque shuffle == False, siempre esta volviendo a generar otro trainloader cuando uno termina..
 
-    # cont = 0
-    # for images, labels in train_loader:
-    #     if cont == 0:
-    #         print(labels)
-    #         break
-    #     cont += 1
-    # print(cont)
-    # cont = 0
-    # for images, labels in train_loader:
-    #     if cont == 0:
-    #         print(labels)
-    #         print("james")
-    #         break
-    #     cont += 1
-    # print(cont)
-    #el trainloader consiste de muchos batches... parece que se genera cuando se invoca?..
-    #parece que cuando se termina un train_loader, automaticamente genera otro al azar si shuffle=True (sino, seran identicos)
-
-    #https: // discuss.pytorch.org / t / dataloader - super - slow / 38686
+    # for sub_images, labels in train_loader:
+    #     #print(sub_images)
+    #     #print(labels)
+    #     break
+    # print()
+    #
+    # for sub_images, labels in train_loader:
+    #     #print(sub_images)
+    #     #print(labels)
+    #     break
