@@ -74,3 +74,5 @@ if __name__ == '__main__':
     # print(cont)
     #el trainloader consiste de muchos batches... parece que se genera cuando se invoca?..
     #parece que cuando se termina un train_loader, automaticamente genera otro al azar si shuffle=True (sino, seran identicos)
+
+    #https: // discuss.pytorch.org / t / dataloader - super - slow / 38686
